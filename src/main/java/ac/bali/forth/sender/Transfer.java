@@ -7,6 +7,10 @@ import java.util.List;
 
 public class Transfer
 {
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_BLACK = "\u001B[30m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
 
     public static final byte[] CR = new byte[] { 13 };
 
@@ -15,6 +19,14 @@ public class Transfer
     {
         String file = args[0];
         SerialPort commPort = SerialPort.getCommPort("/dev/ttyACM0");
+        System.out.println("Draining...");
+        sendCr(commPort);
+        sendCr(commPort);
+        sendCr(commPort);
+        Thread.sleep(100);
+        drain(commPort);
+        System.out.println("\nDraining Done");
+
         try
         {
             Transfer instance = new Transfer();
@@ -47,13 +59,6 @@ public class Transfer
         commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
         System.out.println(commPort.openPort(500));
 
-        System.out.println("Draining...");
-        sendCr(commPort);
-        sendCr(commPort);
-        sendCr(commPort);
-        Thread.sleep(100);
-        drain(commPort);
-        System.out.println("\nDraining Done");
 
         List<String> lines = Files.readAllLines(Paths.get(file));
         for (String line : lines)
@@ -61,7 +66,7 @@ public class Transfer
             line = line.trim();
             if (line.length() > 0 && !line.startsWith("\\"))
             {
-                System.out.println(" Sending:[" + line + "]");
+//                System.out.println(" Sending:[" + line + "]");
                 byte[] bytes = line.getBytes();
                 int bytesWritten = commPort.writeBytes(bytes, bytes.length);
                 if (bytesWritten != bytes.length)
@@ -71,18 +76,19 @@ public class Transfer
                 }
                 commPort.writeBytes(CR, 1);
                 String echo = readLine(commPort);
-                System.out.println("Received:[" + echo + "]");
+                System.out.println(echo);
 
-                if (doesntMatch((line + "  ok.").getBytes(), echo.getBytes(), bytes.length))
+                int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
+                if (matchesUpTo != bytes.length)
                 {
-                    System.err.println("No match:[" + echo + "]");
+                    System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 2) + ANSI_RESET);
                     break;
                 }
             }
         }
     }
 
-    private void sendCr(SerialPort commPort)
+    private static void sendCr(SerialPort commPort)
     {
         commPort.writeBytes(CR, 1);
     }
@@ -138,15 +144,15 @@ public class Transfer
         }
     }
 
-    boolean doesntMatch(byte[] buf1, byte[] buf2, int length)
+    int match(byte[] buf1, byte[] buf2, int length)
     {
         for (int i = 0; i < length - 1; i++)
         {
             if (buf1[i] != buf2[i])
             {
-                return true;
+                return i;
             }
         }
-        return false;
+        return length;
     }
 }
