@@ -85,6 +85,8 @@ public class Transfer
     private void transfer(String file, SerialPort commPort)
         throws Exception
     {
+        System.out.println(ANSI_GREEN + file + ANSI_RESET);
+        System.out.println();
         List<String> lines = Files.readAllLines(Paths.get(file));
         for (String line : lines)
         {
