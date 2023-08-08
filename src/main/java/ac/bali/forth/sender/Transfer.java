@@ -23,7 +23,7 @@ public class Transfer
         String serialPort = "/dev/ttyACM0";
         SerialPort commPort = SerialPort.getCommPort(serialPort);
         commPort.setBaudRate(115200);
-        commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 500);
+        commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 2500, 2500);
         commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
         if( ! commPort.openPort(500) )
         {
@@ -128,7 +128,7 @@ public class Transfer
         StringBuilder result = new StringBuilder();
         while (true)
         {
-            if (commPort.readBytes(buffer, 1) == 1)
+            if (commPort.readBytes(buffer, 1) > 0)
             {
                 char c = (char) buffer[0];
                 if (c == 13 || c == 10)
@@ -143,7 +143,7 @@ public class Transfer
             }
             else
             {
-                throw new RuntimeException("Timeout");
+                throw new RuntimeException("Read Timeout");
             }
         }
     }
