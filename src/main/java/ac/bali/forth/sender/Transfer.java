@@ -11,6 +11,7 @@ public class Transfer
     public static final String ANSI_BLACK = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_BLUE = "\u001B[34m";
 
     public static final byte[] CR = new byte[] { 13 };
     public static final String COMPILER_ERROR = "Compiler Error";
@@ -102,15 +103,19 @@ public class Transfer
                 commPort.writeBytes(CR, 1);
                 String echo = readLine(commPort);
                 System.out.print(echo.substring(0,line.length()));
-                System.out.print(ANSI_GREEN);
-                System.out.print(echo.substring(line.length()));
-                System.out.println(ANSI_RESET);
 
                 int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
                 if (matchesUpTo != bytes.length + 5)
                 {
-                    System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 1) + ANSI_RESET);
-                    throw new RuntimeException(COMPILER_ERROR);
+                    System.out.print(ANSI_RED);
+                    System.out.print(echo.substring(line.length()));
+                    System.out.println(ANSI_RESET);
+                }
+                else
+                {
+                    System.out.print(ANSI_BLUE);
+                    System.out.print(echo.substring(line.length()));
+                    System.out.println(ANSI_RESET);
                 }
             }
         }
