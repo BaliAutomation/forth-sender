@@ -90,7 +90,7 @@ public class Transfer
         List<String> lines = Files.readAllLines(Paths.get(file));
         for (String line : lines)
         {
-            if (line.length() > 0 && !line.startsWith("\\"))
+//            if (line.length() > 0 && !line.startsWith("\\"))
             {
                 byte[] bytes = line.getBytes();
                 int bytesWritten = commPort.writeBytes(bytes, bytes.length);
