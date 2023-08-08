@@ -1,128 +1,174 @@
 package ac.bali.forth.sender;
 
 import com.fazecast.jSerialComm.SerialPort;
+
+import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Transfer
 {
     public static final String ANSI_RESET = "\u001B[0m";
-    public static final String ANSI_BLACK = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
     public static final String ANSI_BLUE = "\u001B[34m";
 
     public static final byte[] CR = new byte[] { 13 };
     public static final String COMPILER_ERROR = "Compiler Error";
+    private static SerialPort commPort;
+
+    private static Transfer instance;
+    private final int here0;
+    private int here1;
 
     public static void main(String[] args)
+        throws Exception {
+
+        instance = new Transfer();
+        parseCmdLine(args, file -> {
+            try
+            {
+                instance.transfer(file);
+            } catch (Exception e)
+            {
+                System.out.println();
+                System.err.println();
+                commPort.closePort();
+                if( ! e.getMessage().equals(COMPILER_ERROR)) {
+                    throw new UndeclaredThrowableException(e);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    Thread.sleep(100);
+                } catch (Exception e)
+                {
+                    // ignore
+                }
+            }
+        });
+        int end = instance.here();
+        System.out.println("Total memory added: " + (end - instance.here0));
+    }
+
+    public Transfer()
         throws Exception
     {
-        String file = args[0];
+
         String serialPort = "/dev/ttyACM0";
-        SerialPort commPort = SerialPort.getCommPort(serialPort);
+        commPort = SerialPort.getCommPort(serialPort);
         commPort.setBaudRate(115200);
         commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 2500, 2500);
         commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
-        if( ! commPort.openPort(500) )
-        {
+        if (!commPort.openPort(500)) {
             System.err.println("Unable to open serial port " + serialPort);
             System.exit(1);
         }
+        drain();
+        here0 = here();
+    }
 
-        drain(commPort);
-
-        try
+    public static void parseCmdLine(String[] args, Consumer<String> then) throws IOException {
+        String file = args[0];
+        if (file.startsWith("@"))
         {
-            Transfer instance = new Transfer();
-            if (file.startsWith("@"))
+            List<String> files = Files.readAllLines(Paths.get(file.substring(1)));
+            for (String filename : files)
             {
-                List<String> files = Files.readAllLines(Paths.get(file.substring(1)));
-                for (String filename : files)
+                filename = filename.trim();
+                if( !filename.startsWith("#"))
                 {
-                    if( !filename.startsWith("#"))
-                    {
-                        instance.transfer(filename, commPort);
-                    }
+                    then.accept(filename);
                 }
             }
-            else
-            {
-                instance.transfer(file, commPort);
-            }
-        } catch (Exception e)
+        }
+        else
         {
-            System.out.println();
-            System.err.println();
-            commPort.closePort();
-            Thread.sleep(100);
-            if( ! e.getMessage().equals(COMPILER_ERROR)) {
-                throw e;
-            }
+            then.accept(file);
         }
     }
 
-    private static void sendCr(SerialPort commPort)
+    public void transfer(String file)
+    {
+        try {
+            System.out.println(ANSI_GREEN + file + ANSI_RESET);
+            System.out.println();
+
+            List<String> lines = Files.readAllLines(Paths.get(file));
+            for (String line : lines) {
+//            if (line.length() > 0 && !line.startsWith("\\"))
+                {
+                    writeLine(commPort, line);
+                    String echo = readLine(commPort);
+                    System.out.print(echo.substring(0, line.length()));
+
+                    int matchesUpTo = match(line, echo);
+                    if (matchesUpTo != line.length() + 5) {
+                        System.out.print(ANSI_RED);
+                        System.out.print(echo.substring(line.length()));
+                        System.out.println(ANSI_RESET);
+                        throw new RuntimeException(COMPILER_ERROR);
+                    } else {
+                        System.out.print(ANSI_BLUE);
+                        System.out.print(echo.substring(line.length()));
+                        System.out.println(ANSI_RESET);
+                    }
+                }
+            }
+            int here = here();
+            System.out.println("Size:" + (here - here1));
+            here1 = here;
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int here() {
+        writeLine(commPort, "hex here .");
+        String line = readLine(commPort);
+        String[] parts = line.split(" ");
+        return Integer.parseInt(parts[3], 16);
+    }
+
+    private void sendCr()
     {
         commPort.writeBytes(CR, 1);
     }
 
-    private static void drain(SerialPort commPort)
-            throws InterruptedException
+    private void drain()
+        throws InterruptedException
     {
         System.out.println("Draining...");
-        sendCr(commPort);
-        sendCr(commPort);
-        sendCr(commPort);
+        sendCr();
+        sendCr();
+        sendCr();
         Thread.sleep(100);
         byte[] buffer = new byte[2048];
         while (commPort.bytesAvailable() > 0)
         {
             commPort.readBytes(buffer, 1);
             System.out.print(new String(buffer, 0, 1));
+            //noinspection BusyWait
             Thread.sleep(1);
         }
         System.out.println("\nDraining Done");
     }
 
-    private void transfer(String file, SerialPort commPort)
-        throws Exception
-    {
-        System.out.println(ANSI_GREEN + file + ANSI_RESET);
-        System.out.println();
-        List<String> lines = Files.readAllLines(Paths.get(file));
-        for (String line : lines)
+    private void writeLine(SerialPort commPort, String line) {
+        byte[] bytes = line.getBytes();
+        int bytesWritten = commPort.writeBytes(bytes, bytes.length);
+        if (bytesWritten != bytes.length)
         {
-//            if (line.length() > 0 && !line.startsWith("\\"))
-            {
-                byte[] bytes = line.getBytes();
-                int bytesWritten = commPort.writeBytes(bytes, bytes.length);
-                if (bytesWritten != bytes.length)
-                {
-                    System.err.println("Couldn't write all of:" + line);
-                    break;
-                }
-                commPort.writeBytes(CR, 1);
-                String echo = readLine(commPort);
-                System.out.print(echo.substring(0,line.length()));
-
-                int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
-                if (matchesUpTo != bytes.length + 5)
-                {
-                    System.out.print(ANSI_RED);
-                    System.out.print(echo.substring(line.length()));
-                    System.out.println(ANSI_RESET);
-                    throw new RuntimeException(COMPILER_ERROR);
-                }
-                else
-                {
-                    System.out.print(ANSI_BLUE);
-                    System.out.print(echo.substring(line.length()));
-                    System.out.println(ANSI_RESET);
-                }
-            }
+            System.err.println(ANSI_RED + "Couldn't write all of:" + line + ANSI_RESET);
+            throw new RuntimeException("Write timeout");
         }
+        sendCr();
     }
 
     private String readLine(SerialPort commPort)
@@ -151,22 +197,18 @@ public class Transfer
         }
     }
 
-    private void waitForBytes(SerialPort commPort, int length)
+    private int match(String sent, String received)
     {
-        long until = System.currentTimeMillis() + 2000;
-        while (commPort.bytesAvailable() < length)
-        {
-            if (System.currentTimeMillis() > until)
-            {
-                throw new RuntimeException("Timeout");
-            }
-        }
-    }
-
-    int match(byte[] buf1, byte[] buf2, int length)
-    {
+        String expected = sent + "  ok.";
+        if( expected.equals(received))
+            return received.length();
+        byte[] buf1 = sent.getBytes();
+        byte[] buf2 = received.getBytes();
+        int length = received.length();
         for (int i = 0; i < length - 1; i++)
         {
+            if( i == buf1.length)
+                return i;
             if (buf1[i] != buf2[i])
             {
                 return i;
