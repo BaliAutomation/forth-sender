@@ -52,6 +52,7 @@ public class Transfer
             System.out.println();
             System.err.println();
             commPort.closePort();
+            Thread.sleep(100);
             if( ! e.getMessage().equals(COMPILER_ERROR)) {
                 throw e;
             }
