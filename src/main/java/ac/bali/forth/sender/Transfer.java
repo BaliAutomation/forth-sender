@@ -90,7 +90,6 @@ public class Transfer
         List<String> lines = Files.readAllLines(Paths.get(file));
         for (String line : lines)
         {
-            line = line.trim();
             if (line.length() > 0 && !line.startsWith("\\"))
             {
                 byte[] bytes = line.getBytes();
