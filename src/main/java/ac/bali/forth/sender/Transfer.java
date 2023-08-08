@@ -18,14 +18,18 @@ public class Transfer
         throws Exception
     {
         String file = args[0];
-        SerialPort commPort = SerialPort.getCommPort("/dev/ttyACM0");
-        System.out.println("Draining...");
-        sendCr(commPort);
-        sendCr(commPort);
-        sendCr(commPort);
-        Thread.sleep(100);
+        String serialPort = "/dev/ttyACM0";
+        SerialPort commPort = SerialPort.getCommPort(serialPort);
+        commPort.setBaudRate(115200);
+        commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 500);
+        commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
+        if( ! commPort.openPort(500) )
+        {
+            System.err.println("Unable to open serial port " + serialPort);
+            System.exit(1);
+        }
+
         drain(commPort);
-        System.out.println("\nDraining Done");
 
         try
         {
@@ -44,29 +48,47 @@ public class Transfer
             }
         } catch (Exception e)
         {
+            System.out.println();
+            System.err.println();
             commPort.closePort();
-            throw e;
+            if( ! e.getMessage().equals("Compiler Error")) {
+                throw e;
+            }
         }
-        Thread.sleep(2000);
+    }
+
+    private static void sendCr(SerialPort commPort)
+    {
+        commPort.writeBytes(CR, 1);
+    }
+
+    private static void drain(SerialPort commPort)
+            throws InterruptedException
+    {
+        System.out.println("Draining...");
+        sendCr(commPort);
+        sendCr(commPort);
+        sendCr(commPort);
+        Thread.sleep(100);
+        byte[] buffer = new byte[2048];
+        while (commPort.bytesAvailable() > 0)
+        {
+            commPort.readBytes(buffer, 1);
+            System.out.print(new String(buffer, 0, 1));
+            Thread.sleep(1);
+        }
+        System.out.println("\nDraining Done");
     }
 
     private void transfer(String file, SerialPort commPort)
         throws Exception
     {
-
-        commPort.setBaudRate(115200);
-        commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 500);
-        commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
-        System.out.println(commPort.openPort(500));
-
-
         List<String> lines = Files.readAllLines(Paths.get(file));
         for (String line : lines)
         {
             line = line.trim();
             if (line.length() > 0 && !line.startsWith("\\"))
             {
-//                System.out.println(" Sending:[" + line + "]");
                 byte[] bytes = line.getBytes();
                 int bytesWritten = commPort.writeBytes(bytes, bytes.length);
                 if (bytesWritten != bytes.length)
@@ -81,16 +103,11 @@ public class Transfer
                 int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
                 if (matchesUpTo != bytes.length)
                 {
-                    System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 2) + ANSI_RESET);
-                    break;
+                    System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 1) + ANSI_RESET);
+                    throw new RuntimeException("Compile Error");
                 }
             }
         }
-    }
-
-    private static void sendCr(SerialPort commPort)
-    {
-        commPort.writeBytes(CR, 1);
     }
 
     private String readLine(SerialPort commPort)
@@ -116,19 +133,6 @@ public class Transfer
             {
                 throw new RuntimeException("Timeout");
             }
-        }
-    }
-
-    private static void drain(SerialPort commPort)
-        throws InterruptedException
-    {
-        byte[] buffer = new byte[2048];
-
-        while (commPort.bytesAvailable() > 0)
-        {
-            commPort.readBytes(buffer, 1);
-            System.out.print(new String(buffer, 0, 1));
-            Thread.sleep(1);
         }
     }
 
