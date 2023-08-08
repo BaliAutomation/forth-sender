@@ -52,8 +52,6 @@ public class Transfer
                 }
             }
         });
-        int end = instance.here();
-        System.out.println("Total memory added: " + (end - instance.here0));
     }
 
     public Transfer()
@@ -121,7 +119,7 @@ public class Transfer
                 }
             }
             int here = here();
-            System.out.println("Size:" + (here - here1));
+            System.out.println("Size:" + (here - here1) + "  (Total: " + (here - here0) + ")    (Free: " + (65536 - here) + ")");
             here1 = here;
         } catch (IOException e)
         {
