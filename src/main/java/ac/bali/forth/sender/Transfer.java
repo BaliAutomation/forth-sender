@@ -41,7 +41,10 @@ public class Transfer
                 List<String> files = Files.readAllLines(Paths.get(file.substring(1)));
                 for (String filename : files)
                 {
-                    instance.transfer(filename, commPort);
+                    if( !filename.startsWith("#"))
+                    {
+                        instance.transfer(filename, commPort);
+                    }
                 }
             }
             else
