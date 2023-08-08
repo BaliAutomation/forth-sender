@@ -103,7 +103,7 @@ public class Transfer
                 System.out.println(echo);
 
                 int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
-                if (matchesUpTo != bytes.length)
+                if (matchesUpTo != bytes.length + 5)
                 {
                     System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 1) + ANSI_RESET);
                     throw new RuntimeException(COMPILER_ERROR);
