@@ -101,7 +101,10 @@ public class Transfer
                 }
                 commPort.writeBytes(CR, 1);
                 String echo = readLine(commPort);
-                System.out.println(echo);
+                System.out.print(echo.substring(0,line.length()));
+                System.out.print(ANSI_GREEN);
+                System.out.print(echo.substring(line.length()));
+                System.out.println(ANSI_RESET);
 
                 int matchesUpTo = match((line + "  ok.").getBytes(), echo.getBytes(), bytes.length + 5);
                 if (matchesUpTo != bytes.length + 5)
