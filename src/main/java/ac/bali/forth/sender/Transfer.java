@@ -13,6 +13,7 @@ public class Transfer
     public static final String ANSI_GREEN = "\u001B[32m";
 
     public static final byte[] CR = new byte[] { 13 };
+    public static final String COMPILER_ERROR = "Compiler Error";
 
     public static void main(String[] args)
         throws Exception
@@ -51,7 +52,7 @@ public class Transfer
             System.out.println();
             System.err.println();
             commPort.closePort();
-            if( ! e.getMessage().equals("Compiler Error")) {
+            if( ! e.getMessage().equals(COMPILER_ERROR)) {
                 throw e;
             }
         }
@@ -104,7 +105,7 @@ public class Transfer
                 if (matchesUpTo != bytes.length)
                 {
                     System.err.println("Error: " + ANSI_RED + echo.substring(matchesUpTo - 1) + ANSI_RESET);
-                    throw new RuntimeException("Compile Error");
+                    throw new RuntimeException(COMPILER_ERROR);
                 }
             }
         }
