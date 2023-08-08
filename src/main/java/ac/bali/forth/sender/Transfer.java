@@ -110,6 +110,7 @@ public class Transfer
                     System.out.print(ANSI_RED);
                     System.out.print(echo.substring(line.length()));
                     System.out.println(ANSI_RESET);
+                    throw new RuntimeException(COMPILER_ERROR);
                 }
                 else
                 {
