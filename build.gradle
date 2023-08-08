@@ -10,6 +10,13 @@ repositories {
     mavenCentral()
 }
 
+apply plugin: 'java'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 dependencies {
     implementation group: "com.fazecast", name: "jSerialComm", version: "2.9.3"
 
@@ -28,3 +35,5 @@ apply plugin: 'nebula.ospackage'
 apply plugin: 'nebula.ospackage-base'
 apply plugin: 'nebula.ospackage-daemon'
 apply plugin: 'nebula.ospackage-application'
+
+mainClassName = 'ac.bali.forth.sender.Transfer'
