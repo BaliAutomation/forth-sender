@@ -14,6 +14,7 @@ public class Transfer
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
     public static final String ANSI_BLUE = "\u001B[34m";
 
     public static final byte[] CR = new byte[] { 13 };
@@ -107,10 +108,20 @@ public class Transfer
 
                     int matchesUpTo = match(line, echo);
                     if (matchesUpTo != line.length() + 5) {
-                        System.out.print(ANSI_RED);
-                        System.out.print(echo.substring(line.length()));
-                        System.out.println(ANSI_RESET);
-                        throw new RuntimeException(COMPILER_ERROR);
+                        int length = line.length();
+                        if( line.endsWith("ok."))
+                        {
+                            System.out.print(ANSI_YELLOW);
+                            System.out.print(echo.substring(matchesUpTo, length - 5));
+                            System.out.println(ANSI_RESET);
+                            System.out.print(ANSI_BLUE);
+                            System.out.println(ANSI_RESET);
+                        } else {
+                            System.out.print(ANSI_RED);
+                            System.out.print(echo.substring(length));
+                            System.out.println(ANSI_RESET);
+                            throw new RuntimeException(COMPILER_ERROR);
+                        }
                     } else {
                         System.out.print(ANSI_BLUE);
                         System.out.print(echo.substring(line.length()));
@@ -197,8 +208,7 @@ public class Transfer
 
     private int match(String sent, String received)
     {
-        String expected = sent + "  ok.";
-        if( expected.equals(received))
+        if( received.startsWith(sent) && received.endsWith(" ok."))
             return received.length();
         byte[] buf1 = sent.getBytes();
         byte[] buf2 = received.getBytes();
