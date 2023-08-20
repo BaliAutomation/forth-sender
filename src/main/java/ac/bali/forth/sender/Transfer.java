@@ -105,7 +105,7 @@ public class Transfer {
                     System.out.println(echo);
 
                     int matchesUpTo = match(line, echo);
-                    if (matchesUpTo != line.length() || endsWithOk(echo)) {
+                    if (matchesUpTo != line.length() || !endsWithOk(echo)) {
                         System.out.println();
                         System.out.println();
                         System.out.println("    Sent:  " + line);
