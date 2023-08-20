@@ -105,7 +105,7 @@ public class Transfer {
                     System.out.println(echo);
 
                     int matchesUpTo = match(line, echo);
-                    if (matchesUpTo != line.length() || line.length() != echo.length() - 14) {
+                    if (matchesUpTo != line.length() || endsWithOk(echo)) {
                         System.out.println();
                         System.out.println();
                         System.out.println("    Sent:  " + line);
@@ -179,11 +179,8 @@ public class Transfer {
     }
 
     private int match(String sent, String received) {
-        if (received.startsWith(sent)) {
-            if (received.endsWith( "ok." + ANSI_RESET))
-                return sent.length();
-            if (received.endsWith( "ok'" + ANSI_RESET))
-                return sent.length();
+        if (received.startsWith(sent) && endsWithOk(received)) {
+            return sent.length();
         }
         byte[] buf1 = sent.getBytes();
         byte[] buf2 = received.getBytes();
@@ -196,5 +193,12 @@ public class Transfer {
             }
         }
         return length;
+    }
+
+    private boolean endsWithOk(String text)
+    {
+        if (text.endsWith( "ok." + ANSI_RESET))
+            return true;
+        return text.endsWith("ok'" + ANSI_RESET);
     }
 }
