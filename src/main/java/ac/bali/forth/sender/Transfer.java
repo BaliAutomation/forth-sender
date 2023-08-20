@@ -116,21 +116,17 @@ public class Transfer
                 {
                     writeLine(commPort, line);
                     String echo = readLine(commPort);
-                    System.out.print(echo.substring(0, line.length()));
+                    System.out.print(echo);
 
                     int matchesUpTo = match(line, echo);
                     if (matchesUpTo != line.length() || line.length() != echo.length() - 14) {
-                        if( echo.endsWith("ok."))
-                        {
-                            System.out.println(echo);
-                        } else {
+                        if (!echo.endsWith("ok.")) {
+                            System.out.println();
                             System.out.println();
                             System.out.println("    Sent:  " + line);
                             System.out.println("Received:  " + echo);
                             throw new RuntimeException(COMPILER_ERROR);
                         }
-                    } else {
-                        System.out.println(echo);
                     }
                 }
             }
