@@ -16,9 +16,9 @@ public class Transfer
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
 //    public static final String ANSI_YELLOW = "\u001B[33m";
-//    public static final String ANSI_BLUE = "\u001B[34m";
+    public static final String ANSI_BLUE = "\u001B[34m";
 //    public static final String ANSI_MAGENTA = "\u001B[35m";
-//    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_CYAN = "\u001B[36m";
 //    public static final String ANSI_WHITE = "\u001B[37m";
 //    public static final String ANSI_DARK_GREY = "\u001B[90m";
 //    public static final String ANSI_BRIGHT_RED = "\u001B[91m";
@@ -119,11 +119,12 @@ public class Transfer
                     System.out.print(echo.substring(0, line.length()));
 
                     int matchesUpTo = match(line, echo);
-                    if (matchesUpTo != line.length() || line.length() != echo.length() - 5) {
+                    if (matchesUpTo != line.length() || line.length() != echo.length() - 14) {
                         if( echo.endsWith("ok."))
                         {
                             System.out.println(echo);
                         } else {
+                            System.out.println();
                             System.out.println("    Sent:  " + line);
                             System.out.println("Received:  " + echo);
                             throw new RuntimeException(COMPILER_ERROR);
@@ -212,7 +213,7 @@ public class Transfer
 
     private int match(String sent, String received)
     {
-        if( received.startsWith(sent) && received.contains(" ok."))
+        if( received.startsWith(sent) && received.endsWith(ANSI_CYAN + "ok." + ANSI_RESET))
             return sent.length();
         byte[] buf1 = sent.getBytes();
         byte[] buf2 = received.getBytes();
