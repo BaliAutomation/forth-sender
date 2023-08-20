@@ -179,8 +179,12 @@ public class Transfer {
     }
 
     private int match(String sent, String received) {
-        if (received.startsWith(sent) && (received.endsWith(ANSI_CYAN + "ok." + ANSI_RESET) || received.endsWith(ANSI_BLUE + "ok'" + ANSI_RESET)))
-            return sent.length();
+        if (received.startsWith(sent)) {
+            if (received.endsWith( "ok." + ANSI_RESET))
+                return sent.length();
+            if (received.endsWith( "ok'" + ANSI_RESET))
+                return sent.length();
+        }
         byte[] buf1 = sent.getBytes();
         byte[] buf2 = received.getBytes();
         int length = received.length();
