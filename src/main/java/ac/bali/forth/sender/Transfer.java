@@ -130,7 +130,7 @@ public class Transfer
                             throw new RuntimeException(COMPILER_ERROR);
                         }
                     } else {
-                        System.out.print(echo);
+                        System.out.println(echo);
                     }
                 }
             }
