@@ -12,10 +12,22 @@ import java.util.function.Consumer;
 public class Transfer
 {
     public static final String ANSI_RESET = "\u001B[0m";
+//    public static final String ANSI_BLACK = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_BLUE = "\u001B[34m";
+//    public static final String ANSI_YELLOW = "\u001B[33m";
+//    public static final String ANSI_BLUE = "\u001B[34m";
+//    public static final String ANSI_MAGENTA = "\u001B[35m";
+//    public static final String ANSI_CYAN = "\u001B[36m";
+//    public static final String ANSI_WHITE = "\u001B[37m";
+//    public static final String ANSI_DARK_GREY = "\u001B[90m";
+//    public static final String ANSI_BRIGHT_RED = "\u001B[91m";
+//    public static final String ANSI_BRIGHT_GREEN = "\u001B[92m";
+//    public static final String ANSI_BRIGHT_YELLOW = "\u001B[93m";
+//    public static final String ANSI_BRIGHT_BLUE = "\u001B[94m";
+//    public static final String ANSI_BRIGHT_MAGENTA = "\u001B[95m";
+//    public static final String ANSI_BRIGHT_CYAN = "\u001B[96m";
+//    public static final String ANSI_BRIGHT_WHITE = "\u001B[97m";
 
     public static final byte[] CR = new byte[] { 13 };
     public static final String COMPILER_ERROR = "Compiler Error";
@@ -108,25 +120,16 @@ public class Transfer
 
                     int matchesUpTo = match(line, echo);
                     if (matchesUpTo != line.length() || line.length() != echo.length() - 5) {
-                        int echoLength = echo.length();
                         if( echo.endsWith("ok."))
                         {
-                            System.out.print(ANSI_YELLOW);
-                            System.out.print(echo.substring(matchesUpTo, echoLength - 5));
-                            System.out.println(ANSI_RESET);
-                            System.out.print(ANSI_BLUE);
-                            System.out.print(echo.substring(echoLength - 5));
-                            System.out.println(ANSI_RESET);
+                            System.out.println(echo);
                         } else {
-                            System.out.print(ANSI_RED);
-                            System.out.print(echo.substring(matchesUpTo));
-                            System.out.println(ANSI_RESET);
+                            System.out.println("    Sent:  " + line);
+                            System.out.println("Received:  " + echo);
                             throw new RuntimeException(COMPILER_ERROR);
                         }
                     } else {
-                        System.out.print(ANSI_BLUE);
-                        System.out.print(echo.substring(line.length()));
-                        System.out.println(ANSI_RESET);
+                        System.out.print(echo);
                     }
                 }
             }
@@ -209,7 +212,7 @@ public class Transfer
 
     private int match(String sent, String received)
     {
-        if( received.startsWith(sent) && received.endsWith(" ok."))
+        if( received.startsWith(sent) && received.contains(" ok."))
             return sent.length();
         byte[] buf1 = sent.getBytes();
         byte[] buf2 = received.getBytes();
