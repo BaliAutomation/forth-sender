@@ -116,7 +116,7 @@ public class Transfer
                 {
                     writeLine(commPort, line);
                     String echo = readLine(commPort);
-                    System.out.print(echo);
+                    System.out.println(echo);
 
                     int matchesUpTo = match(line, echo);
                     if (matchesUpTo != line.length() || line.length() != echo.length() - 14) {
