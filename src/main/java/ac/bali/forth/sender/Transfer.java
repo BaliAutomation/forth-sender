@@ -40,9 +40,15 @@ public class Transfer {
             throws Exception {
 
         instance = new Transfer();
-        parseCmdLine(args, file -> {
+        parseCmdLine(args, cmd -> {
             try {
-                instance.transfer(file);
+                if (cmd.startsWith(".include ")) {
+                    String[] parts = cmd.split(" ");
+                    for (int i = 1; i < parts.length; i++)
+                        instance.transfer(parts[i]);
+                } else {
+                    instance.sendLine(cmd);
+                }
             } catch (Exception e) {
                 System.out.println();
                 System.err.println();
@@ -78,16 +84,14 @@ public class Transfer {
 
     public static void parseCmdLine(String[] args, Consumer<String> then) throws IOException {
         String file = args[0];
-        if (file.startsWith("@")) {
-            List<String> files = Files.readAllLines(Paths.get(file.substring(1)));
-            for (String filename : files) {
-                filename = filename.trim();
-                if (!filename.startsWith("#")) {
-                    then.accept(filename);
-                }
+        if (file.endsWith(".fload")) {
+            List<String> lines = Files.readAllLines(Paths.get(file.substring(1)));
+            for (String line : lines) {
+                line = line.trim();
+                then.accept(line);
             }
         } else {
-            then.accept(file);
+            then.accept("include " + file);
         }
     }
 
@@ -98,21 +102,7 @@ public class Transfer {
 
             List<String> lines = Files.readAllLines(Paths.get(file));
             for (String line : lines) {
-//            if (line.length() > 0 && !line.startsWith("\\"))
-                {
-                    writeLine(commPort, line);
-                    String echo = readLine(commPort);
-                    System.out.println(echo);
-
-                    int matchesUpTo = match(line, echo);
-                    if (matchesUpTo != line.length() || !endsWithOk(echo)) {
-                        System.out.println();
-                        System.out.println();
-                        System.out.println("    Sent:  " + line);
-                        System.out.println("Received:  " + echo);
-                        throw new RuntimeException(COMPILER_ERROR);
-                    }
-                }
+                sendLine(line);
             }
             int here = here();
             System.out.println("Size:" + (here - here1) + "  (Total: " + (here - here0) + ")    (Free: " + (0x20010000 - here) + ")");
@@ -122,9 +112,24 @@ public class Transfer {
         }
     }
 
+    private void sendLine(String line) {
+        writeLine(commPort, line);
+        String echo = read(commPort);
+        System.out.println(echo);
+
+        int matchesUpTo = match(line, echo);
+        if (matchesUpTo != line.length() || !endsWithOk(echo)) {
+            System.out.println();
+            System.out.println();
+            System.out.println("    Sent:  " + line);
+            System.out.println("Received:  " + echo);
+            throw new RuntimeException(COMPILER_ERROR);
+        }
+    }
+
     private int here() {
         writeLine(commPort, "hex here .");
-        String line = readLine(commPort);
+        String line = read(commPort);
         String[] parts = line.split(" ");
         return Integer.parseInt(parts[3], 16);
     }
@@ -160,7 +165,7 @@ public class Transfer {
         sendCr();
     }
 
-    private String readLine(SerialPort commPort) {
+    private String read(SerialPort commPort) {
         byte[] buffer = new byte[1];
         StringBuilder result = new StringBuilder();
         while (true) {
@@ -195,9 +200,8 @@ public class Transfer {
         return length;
     }
 
-    private boolean endsWithOk(String text)
-    {
-        if (text.endsWith( "ok." + ANSI_RESET))
+    private boolean endsWithOk(String text) {
+        if (text.endsWith("ok." + ANSI_RESET))
             return true;
         return text.endsWith("ok'" + ANSI_RESET);
     }
