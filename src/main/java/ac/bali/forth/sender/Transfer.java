@@ -91,7 +91,7 @@ public class Transfer {
                 then.accept(line);
             }
         } else {
-            then.accept("include " + file);
+            then.accept(".include " + file);
         }
     }
 
