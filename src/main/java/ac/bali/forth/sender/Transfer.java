@@ -88,7 +88,12 @@ public class Transfer {
             List<String> lines = Files.readAllLines(Paths.get(file.substring(1)));
             for (String line : lines) {
                 line = line.trim();
-                then.accept(line);
+                if (line.startsWith("\\ "))      // trim comment lines and don't send to target
+                {
+                    System.out.println(line);    // but print it so we know where we are
+                } else {
+                    then.accept(line);
+                }
             }
         } else {
             then.accept(".include " + file);
@@ -113,11 +118,6 @@ public class Transfer {
     }
 
     private void sendLine(String line) {
-        if (line.startsWith("\\ "))      // trim comment lines and don't send to target
-        {
-            System.out.println(line);    // but print it so we know where we are
-            return;
-        }
         writeLine(commPort, line);
         String echo = read(commPort);
         System.out.println(echo);
