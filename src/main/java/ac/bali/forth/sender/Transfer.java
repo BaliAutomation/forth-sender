@@ -33,8 +33,10 @@ public class Transfer {
     private static SerialPort commPort;
 
     private static Transfer instance;
-    private final int here0;
-    private int here1;
+    private int here_ram0;
+    private int here_ram1;
+    private final int here_flash0 = 0x08028000;
+    private int here_flash1;
 
     public static void main(String[] args)
             throws Exception {
@@ -79,7 +81,9 @@ public class Transfer {
             System.exit(1);
         }
         drain();
-        here0 = here();
+        int here = here();
+        if (here > 0x2000_0000)
+            here_ram0 = here;
     }
 
     public static void parseCmdLine(String[] args, Consumer<String> then) throws IOException {
@@ -110,9 +114,14 @@ public class Transfer {
                 sendLine(line);
             }
             int here = here();
-            System.out.println("Size:" + (here - here1) + "  (Total: " + (here - here0) + ")    (Free: " + (0x20010000 - here) + ")");
-            here1 = here;
-        } catch (IOException e) {
+            if( here > 0x20000000) {
+                System.out.println("Size:" + (here - here_ram1) + "  (Total (ram): " + (here - here_ram0) + ")    (Free (ram): " + (0x20010000 - here) + ")");
+                here_ram1 = here;
+            }else {
+                System.out.println("Size:" + (here - here_flash1) + "  (Total (flash): " + (here - here_flash0) + ")    (Free (flash): " + (0x0803F000 - here) + ")");
+                here_flash1 = here;
+            }
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -132,7 +141,8 @@ public class Transfer {
         }
     }
 
-    private int here() {
+    private int here() throws InterruptedException {
+        drain();
         writeLine(commPort, "hex here .");
         String line = read(commPort);
         String[] parts = line.split(" ");
