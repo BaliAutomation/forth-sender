@@ -73,14 +73,13 @@ public class Transfer {
 
         String serialPort = "/dev/ttyACM0";
         commPort = SerialPort.getCommPort(serialPort);
-        commPort.setBaudRate(115200);
+        commPort.setBaudRate(460800);
         commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 2500, 2500);
         commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
         if (!commPort.openPort(500)) {
             System.err.println("Unable to open serial port " + serialPort);
             System.exit(1);
         }
-        drain();
         int here = here();
         if (here > 0x2000_0000)
             here_ram0 = here;
