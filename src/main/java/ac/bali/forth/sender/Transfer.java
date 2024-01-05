@@ -11,13 +11,13 @@ import java.util.function.Consumer;
 
 public class Transfer {
     public static final String ANSI_RESET = "\u001B[0m";
-    //    public static final String ANSI_BLACK = "\u001B[30m";
+//    public static final String ANSI_BLACK = "\u001B[30m";
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32m";
-    //    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_BLUE = "\u001B[34m";
-    //    public static final String ANSI_MAGENTA = "\u001B[35m";
-    public static final String ANSI_CYAN = "\u001B[36m";
+//    public static final String ANSI_YELLOW = "\u001B[33m";
+//    public static final String ANSI_BLUE = "\u001B[34m";
+//    public static final String ANSI_MAGENTA = "\u001B[35m";
+//    public static final String ANSI_CYAN = "\u001B[36m";
 //    public static final String ANSI_WHITE = "\u001B[37m";
 //    public static final String ANSI_DARK_GREY = "\u001B[90m";
 //    public static final String ANSI_BRIGHT_RED = "\u001B[91m";
@@ -33,10 +33,10 @@ public class Transfer {
     private static SerialPort commPort;
 
     private static Transfer instance;
-    private int here_ram0;
-    private int here_ram1;
-    private final int here_flash0 = 0x08028000;
-    private int here_flash1;
+//    private int here_ram0;
+//    private int here_ram1;
+//    private final int here_flash0 = 0x08028000;
+//    private int here_flash1;
 
     public static void main(String[] args)
             throws Exception {
@@ -80,10 +80,9 @@ public class Transfer {
             System.err.println("Unable to open serial port " + serialPort);
             System.exit(1);
         }
-        System.out.println("Checking HERE pointer");
-        int here = here();
-        if (here > 0x2000_0000)
-            here_ram0 = here;
+//        int here = here();
+//        if (here > 0x2000_0000)
+//            here_ram0 = here;
     }
 
     public static void parseCmdLine(String[] args, Consumer<String> then) throws IOException {
@@ -113,15 +112,15 @@ public class Transfer {
             for (String line : lines) {
                 sendLine(line);
             }
-            int here = here();
-            if( here > 0x20000000) {
-                System.out.println("Size:" + (here - here_ram1) + "  (Total (ram): " + (here - here_ram0) + ")    (Free (ram): " + (0x20010000 - here) + ")");
-                here_ram1 = here;
-            }else {
-                System.out.println("Size:" + (here - here_flash1) + "  (Total (flash): " + (here - here_flash0) + ")    (Free (flash): " + (0x0803F000 - here) + ")");
-                here_flash1 = here;
-            }
-        } catch (IOException | InterruptedException e) {
+//            int here = here();
+//            if( here > 0x20000000) {
+//                System.out.println("Size:" + (here - here_ram1) + "  (Total (ram): " + (here - here_ram0) + ")    (Free (ram): " + (0x20010000 - here) + ")");
+//                here_ram1 = here;
+//            }else {
+//                System.out.println("Size:" + (here - here_flash1) + "  (Total (flash): " + (here - here_flash0) + ")    (Free (flash): " + (0x0803F000 - here) + ")");
+//                here_flash1 = here;
+//            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -141,13 +140,13 @@ public class Transfer {
         }
     }
 
-    private int here() throws InterruptedException {
-        drain();
-        writeLine(commPort, "hex here .");
-        String line = read(commPort);
-        String[] parts = line.split(" ");
-        return Integer.parseInt(parts[3], 16);
-    }
+//    private int here() throws InterruptedException {
+//        drain();
+//        writeLine(commPort, "hex here .");
+//        String line = read(commPort);
+//        String[] parts = line.split(" ");
+//        return Integer.parseInt(parts[3], 16);
+//    }
 
     private void sendCr() {
         commPort.writeBytes(CR, 1);
