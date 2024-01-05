@@ -80,6 +80,7 @@ public class Transfer {
             System.err.println("Unable to open serial port " + serialPort);
             System.exit(1);
         }
+        System.out.println("Checking HERE pointer");
         int here = here();
         if (here > 0x2000_0000)
             here_ram0 = here;
