@@ -10,23 +10,26 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class Transfer {
-    public static final String ANSI_RESET = "\u001B[0m";
-//    public static final String ANSI_BLACK = "\u001B[30m";
-    public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-//    public static final String ANSI_YELLOW = "\u001B[33m";
-//    public static final String ANSI_BLUE = "\u001B[34m";
-//    public static final String ANSI_MAGENTA = "\u001B[35m";
-//    public static final String ANSI_CYAN = "\u001B[36m";
-//    public static final String ANSI_WHITE = "\u001B[37m";
-//    public static final String ANSI_DARK_GREY = "\u001B[90m";
-//    public static final String ANSI_BRIGHT_RED = "\u001B[91m";
-//    public static final String ANSI_BRIGHT_GREEN = "\u001B[92m";
-//    public static final String ANSI_BRIGHT_YELLOW = "\u001B[93m";
-//    public static final String ANSI_BRIGHT_BLUE = "\u001B[94m";
-//    public static final String ANSI_BRIGHT_MAGENTA = "\u001B[95m";
-//    public static final String ANSI_BRIGHT_CYAN = "\u001B[96m";
-//    public static final String ANSI_BRIGHT_WHITE = "\u001B[97m";
+    public static final boolean USING_COLORS = false;
+
+    public static final String ANSI_RESET = USING_COLORS ? "\u001B[0m" : "";
+    //    public static final String ANSI_BLACK = USING_COLORS ? "\u001B[30m" : "";
+    public static final String ANSI_RED = USING_COLORS ? "\u001B[31m" : "";
+    public static final String ANSI_GREEN = USING_COLORS ? "\u001B[32m" : "";
+//    public static final String ANSI_YELLOW = USING_COLORS ? "\u001B[33m" : "";
+//    public static final String ANSI_BLUE = USING_COLORS ? "\u001B[34m" : "";
+//    public static final String ANSI_MAGENTA = USING_COLORS ? "\u001B[35m" : "";
+    public static final String ANSI_CYAN = USING_COLORS ? "\u001B[36m" : "";
+    //    public static final String ANSI_WHITE = USING_COLORS ? "\u001B[37m" : "";
+//    public static final String ANSI_DARK_GREY = USING_COLORS ? "\u001B[90m" : "";
+//    public static final String ANSI_BRIGHT_RED = USING_COLORS ? "\u001B[91m" : "";
+//    public static final String ANSI_BRIGHT_GREEN = USING_COLORS ? "\u001B[92m" : "";
+//    public static final String ANSI_BRIGHT_YELLOW = USING_COLORS ? "\u001B[93m" : "";
+//    public static final String ANSI_BRIGHT_BLUE = USING_COLORS ? "\u001B[94m" : "";
+//    public static final String ANSI_BRIGHT_MAGENTA = USING_COLORS ? "\u001B[95m" : "";
+//    public static final String ANSI_BRIGHT_CYAN = USING_COLORS ? "\u001B[96m" : "";
+//    public static final String ANSI_BRIGHT_WHITE = USING_COLORS ? "\u001B[97m" : "";
+    public static final String OK_RESPONSE = "  " + ANSI_CYAN + "ok." + ANSI_RESET;
 
     public static final byte[] CR = new byte[]{13};
     public static final String COMPILER_ERROR = "Compiler Error";
@@ -73,7 +76,7 @@ public class Transfer {
 
         String serialPort = "/dev/ttyACM0";
         commPort = SerialPort.getCommPort(serialPort);
-        commPort.setBaudRate(460800);
+        commPort.setBaudRate(115200);
         commPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 2500, 2500);
         commPort.setFlowControl(SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED | SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED);
         if (!commPort.openPort(500)) {
@@ -88,7 +91,7 @@ public class Transfer {
     public static void parseCmdLine(String[] args, Consumer<String> then) throws IOException {
         String file = args[0];
         if (file.endsWith(".fload")) {
-            List<String> lines = Files.readAllLines(Paths.get(file.substring(1)));
+            List<String> lines = Files.readAllLines(Paths.get(file));
             for (String line : lines) {
                 line = line.trim();
                 if (line.startsWith("\\ "))      // trim comment lines and don't send to target
@@ -132,10 +135,17 @@ public class Transfer {
 
         int matchesUpTo = match(line, echo);
         if (matchesUpTo != line.length() || !endsWithOk(echo)) {
+            if( echo.equals(OK_RESPONSE)) {
+                echo = read(commPort);      // This is needed to support the \\\ feeding source code into the Forth system. It will return an extra "ok."
+                matchesUpTo = match(line, echo);
+                if (matchesUpTo == line.length() && endsWithOk(echo)) {
+                    return;
+                }
+            }
             System.out.println();
-            System.out.println();
-            System.out.println("    Sent:  " + line);
-            System.out.println("Received:  " + echo);
+            System.out.println("Matches up to: " + matchesUpTo);
+            System.out.println("    Sent:  " + line + "    Length(" + line.length() +")");
+            System.out.println("Received:  " + echo + "    Length(" + echo.length() +")");
             throw new RuntimeException(COMPILER_ERROR);
         }
     }
@@ -185,8 +195,9 @@ public class Transfer {
         while (true) {
             if (commPort.readBytes(buffer, 1) > 0) {
                 char c = (char) buffer[0];
-                if (c == 13 || c == 10) {
-                    return result.toString();
+                if ((c == 13 || c == 10)) {
+                    if (result.length() > 0)
+                        return result.toString();
                 } else {
                     result.append(c);
                 }
