@@ -1,7 +1,5 @@
 plugins {
     id 'java'
-    id "nebula.release" version "15.3.1"
-    id "nebula.ospackage" version "8.5.6"
 }
 
 group = 'ac.bali.forth'
@@ -11,6 +9,7 @@ repositories {
 }
 
 apply plugin: 'java'
+apply plugin: 'application'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -27,13 +26,5 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-
-apply plugin: 'application'
-apply plugin: 'nebula.release'
-//apply plugin: 'nebula.deb'
-apply plugin: 'nebula.ospackage'
-apply plugin: 'nebula.ospackage-base'
-apply plugin: 'nebula.ospackage-daemon'
-apply plugin: 'nebula.ospackage-application'
 
 mainClassName = 'ac.bali.forth.sender.Transfer'

@@ -47,7 +47,7 @@ public class Transfer {
         instance = new Transfer();
         parseCmdLine(args, cmd -> {
             try {
-                if (cmd.startsWith(".include ")) {
+                if (cmd.trim().startsWith(".include ")) {
                     String[] parts = cmd.split(" ");
                     for (int i = 1; i < parts.length; i++)
                         instance.transfer(parts[i]);
